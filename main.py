@@ -2,16 +2,24 @@ import logging
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.enums.chat_member_status import ChatMemberStatus
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroups
 
+from config import API_TOKEN, CHANNEL_ID
 
-API_TOKEN = '7249297723:AAG5wwtZxvgmNs-FnZBjVs-S5eN7nT7eUHA'
-CHANNEL_ID = '-1002070717809'
-
-
+router = Router()
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
-router = Router()
-dp.include_router(router)
+
+
+class Bot_status():
+    start = State()
+    remove_u = State()
+    remove_f = State()
+    remove_l = State()
+    remove_d = State()
+
+
 
 logging.basicConfig(level=logging.INFO)
 
