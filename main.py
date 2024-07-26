@@ -2,29 +2,18 @@ import logging
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.enums.chat_member_status import ChatMemberStatus
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State
 from aiogram.types import Message
-from aiogram.filters import Command, CommandStart, state
-
+from aiogram.filters import Command, CommandStart
 from config import API_TOKEN, CHANNEL_ID
 
 
 router = Router()
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
-
-class Bot_status():
-    start = State()
-    remove_u = State()
-    remove_f = State()
-    remove_l = State()
-    remove_d = State()
-
 logging.basicConfig(level=logging.INFO)
 
-
 @router.message(CommandStart())
-async def send_welcome(message: Message, state: FSMContext):
+async def command_start(message: Message):
     await message.answer(
         "Привет! Используй команды для управления подписчиками:\n"
         "/remove_by_username <username> - удалить по нику\n"
@@ -32,15 +21,10 @@ async def send_welcome(message: Message, state: FSMContext):
         "/remove_last <n> - удалить последних N подписчиков\n"
         "/remove_deleted - удалить неактивных пользователей."
     )
-    await state.set_state(Bot_status.start)
-
 
 @router.message(Command(commands=['remove_by_username']))
 async def remove_by_username(message: types.Message, state: FSMContext):
     username = message.get_args().strip()
-
-    await state.update_data(name=message.text)
-    await state.set_state(Bot_status.remove_u)
     if not username:
         await message.answer("Пожалуйста, укажите имя пользователя (ник).")
         return
