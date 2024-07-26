@@ -1,16 +1,17 @@
 import logging
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.enums.chat_member_status import ChatMemberStatus
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroups
+from aiogram.fsm.state import State
+from aiogram.types import Message
+from aiogram.filters import Command, CommandStart, state
 
 from config import API_TOKEN, CHANNEL_ID
+
 
 router = Router()
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
-
 
 class Bot_status():
     start = State()
@@ -19,25 +20,29 @@ class Bot_status():
     remove_l = State()
     remove_d = State()
 
-
-
 logging.basicConfig(level=logging.INFO)
 
-@router.message(Command(commands=['start']))
-async def send_welcome(message: types.Message):
-    await message.reply(
+
+@router.message(CommandStart())
+async def send_welcome(message: Message, state: FSMContext):
+    await message.answer(
         "Привет! Используй команды для управления подписчиками:\n"
         "/remove_by_username <username> - удалить по нику\n"
         "/remove_first <n> - удалить первых N подписчиков\n"
         "/remove_last <n> - удалить последних N подписчиков\n"
         "/remove_deleted - удалить неактивных пользователей."
     )
+    await state.set_state(Bot_status.start)
+
 
 @router.message(Command(commands=['remove_by_username']))
-async def remove_by_username(message: types.Message):
+async def remove_by_username(message: types.Message, state: FSMContext):
     username = message.get_args().strip()
+
+    await state.update_data(name=message.text)
+    await state.set_state(Bot_status.remove_u)
     if not username:
-        await message.reply("Пожалуйста, укажите имя пользователя (ник).")
+        await message.answer("Пожалуйста, укажите имя пользователя (ник).")
         return
 
     try:
@@ -46,9 +51,13 @@ async def remove_by_username(message: types.Message):
                 await bot.ban_chat_member(chat_id=CHANNEL_ID, user_id=member.user.id)
                 await message.reply(f"Пользователь @{username} удален.")
                 return
-        await message.reply("Пользователь с таким ником не найден.")
+        await message.answer("Пользователь с таким ником не найден.")
     except Exception as e:
-        await message.reply(f"Ошибка при удалении пользователя: {e}")
+        await message.answer(f"Ошибка при удалении пользователя: {e}")
+
+
+    await state.set_state()
+
 
 @router.message(Command(commands=['remove_first']))
 async def remove_first(message: types.Message):
